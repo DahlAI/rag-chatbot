@@ -49,7 +49,24 @@ if prompt := st.chat_input("Ask a question about your knowledge base..."):
                 
                 if response.status_code == 200:
                     answer = response.text
-                    st.markdown(answer)
+                    
+                    # Format citations nicely
+                    # Replace [Source: ...] with styled citations
+                    import re
+                    
+                    # Find all citations in format [Source: Article Title]
+                    citations = re.findall(r'\[Source: ([^\]]+)\]', answer)
+                    
+                    # Display the main answer (remove inline citations)
+                    main_answer = re.sub(r'\[Source: ([^\]]+)\]', '', answer)
+                    st.markdown(main_answer)
+                    
+                    # Display citations separately if they exist
+                    if citations:
+                        st.markdown("---")
+                        st.markdown("**📚 Sources:**")
+                        for i, citation in enumerate(set(citations), 1):  # use set to remove duplicates
+                            st.markdown(f"{i}. *{citation}*")
                     
                     # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": answer})
