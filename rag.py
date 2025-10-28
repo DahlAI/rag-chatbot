@@ -51,22 +51,30 @@ if prompt := st.chat_input("Ask a question about your knowledge base..."):
                     answer = response.text
                     
                     # Format citations nicely
-                    # Replace [Source: ...] with styled citations
+                    # Replace [Source: ... | Category: ... | Folder: ...] with styled citations
                     import re
                     
-                    # Find all citations in format [Source: Article Title]
-                    citations = re.findall(r'\[Source: ([^\]]+)\]', answer)
+                    # Find all citations with full format
+                    citation_pattern = r'\[Source: ([^\|]+)\s*\|\s*Category: ([^\|]+)\s*\|\s*Folder: ([^\]]+)\]'
+                    citations = re.findall(citation_pattern, answer)
                     
                     # Display the main answer (remove inline citations)
-                    main_answer = re.sub(r'\[Source: ([^\]]+)\]', '', answer)
+                    main_answer = re.sub(citation_pattern, '', answer)
                     st.markdown(main_answer)
                     
                     # Display citations separately if they exist
                     if citations:
                         st.markdown("---")
                         st.markdown("**📚 Sources:**")
-                        for i, citation in enumerate(set(citations), 1):  # use set to remove duplicates
-                            st.markdown(f"{i}. *{citation}*")
+                        seen = set()
+                        count = 1
+                        for title, category, folder in citations:
+                            citation_key = (title.strip(), category.strip(), folder.strip())
+                            if citation_key not in seen:
+                                seen.add(citation_key)
+                                st.markdown(f"{count}. **{title.strip()}**")
+                                st.markdown(f"   └─ 📁 Category: *{category.strip()}* | Folder: *{folder.strip()}*")
+                                count += 1
                     
                     # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": answer})
